@@ -1,11 +1,9 @@
-import xbmc,xbmcaddon,os      
-import kodi
-import client
-import cache
-import log_utils
+# from kodi_six import xbmc, xbmcaddon
+# import os
+# from packlib import kodi, client, cache, log_utils
  
-def check(scraper):
-    return
+# def check(scraper):
+#     return
     # try:
         # disable_check = xbmcaddon.Addon('plugin.video.adultflix').getSetting('dev_scrapers')
 
@@ -26,4 +24,4 @@ def check(scraper):
                         # log_utils.log('%s updated!' % scraper.title(), log_utils.LOGNOTICE)
                         # kodi.notify(msg='%s Updated.' % scraper.title(), duration=1250, sound=True, icon_path=icon)
     # except Exception as e:
-        # log_utils.log('Error checking for scraper update %s :: Error: %s' % (scraper.title(),str(e)), log_utils.LOGERROR)
+        # log_utils.log('Error checking for scraper update %s :: Error: %s' % (scraper.title(),str(e)), xbmc.LOGERROR)

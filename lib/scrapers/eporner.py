@@ -1,12 +1,11 @@
-import xbmc,xbmcplugin,os,urlparse,re
-import client
-import kodi
-import dom_parser2
-import log_utils
-import scraper_updater
-from resources.lib.modules import utils
+import os, six, re
+from kodi_six import xbmc
+from packlib import client, kodi, dom_parser2, log_utils
+
+from resources.lib.modules import local_utils
 from resources.lib.modules import helper
-buildDirectory = utils.buildDir
+buildDirectory = local_utils.buildDir
+urljoin = six.moves.urllib.parse.urljoin
 
 filename     = os.path.basename(__file__).split('.')[0]
 base_domain  = 'https://eporner.com'
@@ -17,14 +16,14 @@ content_mode = 201
 player_mode  = 801
 
 search_tag   = 1
-search_base  = urlparse.urljoin(base_domain,'search/%s')
+search_base  = urljoin(base_domain,'search/%s')
 
-@utils.url_dispatcher.register('%s' % menu_mode)
+@local_utils.url_dispatcher.register('%s' % menu_mode)
 def menu():
     
-    scraper_updater.check(filename)
+
     
-    url           = urlparse.urljoin(base_domain,'0')
+    url           = urljoin(base_domain,'0')
     content_type  = 'dir'
     title_pattern = '''<strong>([^<]+)'''
     url_pattern   = '''href="([^"]+)'''
@@ -37,20 +36,20 @@ def menu():
     
     helper.scraper().get_list(content_mode,content_type,url,title_pattern,url_pattern,icon_pattern,filename,d_p1,d_p2,d_p3,parse,cache_time)
 
-@utils.url_dispatcher.register('%s' % content_mode,['url'],['searched'])
+@local_utils.url_dispatcher.register('%s' % content_mode,['url'],['searched'])
 def content(url,searched=False):
 
     try:
         c = client.request(url)
         r = dom_parser2.parse_dom(c, 'div', {'class': 'mb'})
         r = [(dom_parser2.parse_dom(i, 'a', req=['href', 'title']),dom_parser2.parse_dom(i, 'img', req=['src'])) for i in r if r]
-        r = [(urlparse.urljoin(base_domain,i[0][0].attrs['href']),i[0][0].attrs['title'],i[1][0].attrs['src']) for i in r]
+        r = [(urljoin(base_domain,i[0][0].attrs['href']),i[0][0].attrs['title'],i[1][0].attrs['src']) for i in r]
         if ( not r ) and ( not searched ):
-            log_utils.log('Scraping Error in %s:: Content of request: %s' % (base_name.title(),str(c)), log_utils.LOGERROR)
+            log_utils.log('Scraping Error in %s:: Content of request: %s' % (base_name.title(),str(c)), xbmc.LOGERROR)
             kodi.notify(msg='Scraping Error: Info Added To Log File', duration=6000, sound=True)
     except Exception as e:
         if ( not searched ):
-            log_utils.log('Fatal Error in %s:: Error: %s' % (base_name.title(),str(e)), log_utils.LOGERROR)
+            log_utils.log('Fatal Error in %s:: Error: %s' % (base_name.title(),str(e)), xbmc.LOGERROR)
             kodi.notify(msg='Fatal Error', duration=4000, sound=True)
             quit()    
         else: pass
@@ -66,7 +65,7 @@ def content(url,searched=False):
             fanarts = xbmc.translatePath(os.path.join('special://home/addons/script.adultflix.artwork', 'resources/art/%s/fanart.jpg' % filename))
             dirlst.append({'name': name, 'url': content_url, 'mode': player_mode, 'icon': i[2], 'fanart': fanarts, 'description': description, 'folder': False})
         except Exception as e:
-            log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[0].title(),base_name.title(),str(e)), log_utils.LOGERROR)
+            log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[0].title(),base_name.title(),str(e)), xbmc.LOGERROR)
     
     if dirlst: buildDirectory(dirlst, stopend=True, isVideo = True, isDownloadable = True)
     else:

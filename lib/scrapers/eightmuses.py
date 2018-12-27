@@ -1,12 +1,11 @@
-import xbmc,xbmcplugin,os,urlparse,re
-import client
-import kodi
-import dom_parser2
-import log_utils
-import scraper_updater
-from resources.lib.modules import utils
+from kodi_six import xbmc
+import os, six, re
+from packlib import client, kodi, dom_parser2, log_utils
+
+from resources.lib.modules import local_utils
 from resources.lib.modules import helper
-buildDirectory = utils.buildDir
+buildDirectory = local_utils.buildDir
+urljoin = six.moves.urllib.parse.urljoin
 
 filename     = os.path.basename(__file__).split('.')[0]
 base_domain  = 'https://www.8muses.com'
@@ -17,11 +16,11 @@ pic_men_mode = 756
 comics_mode  = 757
 pic_v_mode   = 805
 
-@utils.url_dispatcher.register('%s' % pic_men_mode, ['url'])
+@local_utils.url_dispatcher.register('%s' % pic_men_mode, ['url'])
 def menu(url=None):
     
     try:
-        if ( not url ): url = urlparse.urljoin(base_domain,'comix/')
+        if ( not url ): url = urljoin(base_domain,'comix/')
         c = client.request(url)
         r = dom_parser2.parse_dom(c, 'div', {'class': 'gallery'})
         r = dom_parser2.parse_dom(r, 'a', req='href')
@@ -30,13 +29,13 @@ def menu(url=None):
               dom_parser2.parse_dom(i, 'img', req='data-src'), \
               dom_parser2.parse_dom(i, 'span', {'class': 'title-text'})) \
             for i in r if i]
-        r = [(urlparse.urljoin(base_domain,i[0]), i[2][0].content, i[1][0].attrs['data-src']) for i in r if i]
+        r = [(urljoin(base_domain,i[0]), i[2][0].content, i[1][0].attrs['data-src']) for i in r if i]
         if ( not r ):
-            log_utils.log('Scraping Error in %s:: Content of request: %s' % (base_name.title(),str(c)), log_utils.LOGERROR)
+            log_utils.log('Scraping Error in %s:: Content of request: %s' % (base_name.title(),str(c)), xbmc.LOGERROR)
             kodi.notify(msg='Scraping Error: Info Added To Log File', duration=6000, sound=True)
             quit()
     except Exception as e:
-        log_utils.log('Fatal Error in %s:: Error: %s' % (base_name.title(),str(e)), log_utils.LOGERROR)
+        log_utils.log('Fatal Error in %s:: Error: %s' % (base_name.title(),str(e)), xbmc.LOGERROR)
         kodi.notify(msg='Fatal Error', duration=4000, sound=True)
         quit()
         
@@ -48,7 +47,7 @@ def menu(url=None):
             fanarts = xbmc.translatePath(os.path.join('special://home/addons/script.adultflix.artwork', 'resources/art/%s/fanart.jpg' % filename))
             dirlst.append({'name': name, 'url': i[0], 'mode': comics_mode, 'icon': i[2], 'fanart': fanarts, 'folder': True})
         except Exception as e:
-            log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[1].title(),base_name.title(),str(e)), log_utils.LOGERROR)
+            log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[1].title(),base_name.title(),str(e)), xbmc.LOGERROR)
     
     if dirlst:
         buildDirectory(dirlst, stopend=True, pictures=True)    
@@ -59,12 +58,12 @@ def menu(url=None):
         kodi.notify(msg='No Menu Items Found')
         quit()
         
-@utils.url_dispatcher.register('%s' % comics_mode, ['url'])
+@local_utils.url_dispatcher.register('%s' % comics_mode, ['url'])
 def comics(url=None):
     
     reload = False
     try:
-        if ( not url ): url = urlparse.urljoin(base_domain,'comix/')
+        if ( not url ): url = urljoin(base_domain,'comix/')
         c = client.request(url)
         try:
             r = dom_parser2.parse_dom(c, 'div', {'class': 'gallery'})
@@ -74,7 +73,7 @@ def comics(url=None):
                   dom_parser2.parse_dom(i, 'img', req='data-src'), \
                   dom_parser2.parse_dom(i, 'span', {'class': 'title-text'})) \
                 for i in r if i]
-            r = [(urlparse.urljoin(base_domain,i[0]), i[2][0].content, i[1][0].attrs['data-src']) for i in r if i]
+            r = [(urljoin(base_domain,i[0]), i[2][0].content, i[1][0].attrs['data-src']) for i in r if i]
             reload = True
         except:
             r = dom_parser2.parse_dom(c, 'div', {'class': 'gallery'})
@@ -83,14 +82,14 @@ def comics(url=None):
             r = [(i.attrs['href'], \
                   dom_parser2.parse_dom(i, 'img', req='data-src')) \
                 for i in r if i]
-            r = [(urlparse.urljoin(base_domain,i[0]), i[1][0].attrs['data-src']) for i in r if i]
+            r = [(urljoin(base_domain,i[0]), i[1][0].attrs['data-src']) for i in r if i]
             reload = False
         if ( not r ):
-            log_utils.log('Scraping Error in %s:: Content of request: %s' % (base_name.title(),str(c)), log_utils.LOGERROR)
+            log_utils.log('Scraping Error in %s:: Content of request: %s' % (base_name.title(),str(c)), xbmc.LOGERROR)
             kodi.notify(msg='Scraping Error: Info Added To Log File', duration=6000, sound=True)
             quit()
     except Exception as e:
-        log_utils.log('Fatal Error in %s:: Error: %s' % (base_name.title(),str(e)), log_utils.LOGERROR)
+        log_utils.log('Fatal Error in %s:: Error: %s' % (base_name.title(),str(e)), xbmc.LOGERROR)
         kodi.notify(msg='Fatal Error', duration=4000, sound=True)
         quit()
         
@@ -103,7 +102,7 @@ def comics(url=None):
                 fanarts = xbmc.translatePath(os.path.join('special://home/addons/script.adultflix.artwork', 'resources/art/%s/fanart.jpg' % filename))
                 dirlst.append({'name': name, 'url': i[0], 'mode': comics_mode, 'icon': i[2], 'fanart': fanarts, 'folder': True})
             except Exception as e:
-                log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[1].title(),base_name.title(),str(e)), log_utils.LOGERROR)
+                log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[1].title(),base_name.title(),str(e)), xbmc.LOGERROR)
     else:
         num = 1
         for i in r:
@@ -112,7 +111,7 @@ def comics(url=None):
                 fanarts = xbmc.translatePath(os.path.join('special://home/addons/script.adultflix.artwork', 'resources/art/%s/fanart.jpg' % filename))
                 dirlst.append({'name': name, 'url': i[0], 'mode': pic_v_mode, 'icon': i[1], 'fanart': fanarts, 'folder': False})
             except Exception as e:
-                log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[1].title(),base_name.title(),str(e)), log_utils.LOGERROR)
+                log_utils.log('Error adding menu item %s in %s:: Error: %s' % (i[1].title(),base_name.title(),str(e)), xbmc.LOGERROR)
             num += 1
             
     if dirlst:
